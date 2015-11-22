@@ -32,6 +32,14 @@ var getTop = function(element) {
     if(element.nodeName === 'HTML') return -window.pageYOffset
     return element.getBoundingClientRect().top + window.pageYOffset;
 }
+
+// Get the left position of an element in the document
+var getLeft = function(element) {
+    // return value of html.getBoundingClientRect().left ... IE : 0, other browsers : -pageXOffset
+    if(element.nodeName === 'HTML') return -window.pageXOffset
+    return element.getBoundingClientRect().left + window.pageXOffset;
+}
+
 // ease in out function thanks to:
 // http://blog.greweb.fr/2012/02/bezier-curve-based-easing-functions-from-concept-to-implementation/
 var easeInOutCubic = function (t) { return t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1 }
@@ -50,16 +58,16 @@ var position = function(start, end, elapsed, duration) {
 // if the first argument is an element then scroll to the top of this element
 // if the first argument is numeric then scroll to this location
 // if the callback exist, it is called when the scrolling is finished
-// if context is set then scroll that element, else scroll window 
-var smoothScroll = function(el, duration, callback, context){
+// if context is set then scroll that element, else scroll window
+var smoothScroll = function(el, duration, callback, context, axis){
     duration = duration || 500;
     context = context || window;
-    var start = window.pageYOffset;
+    var start = (axis == "x") ? window.pageXOffset : window.pageYOffset;
 
     if (typeof el === 'number') {
       var end = parseInt(el);
     } else {
-      var end = getTop(el);
+      var end = (axis == "x") ? getLeft(el) : getTop(el);
     }
 
     var clock = Date.now();
@@ -69,12 +77,24 @@ var smoothScroll = function(el, duration, callback, context){
 
     var step = function(){
         var elapsed = Date.now() - clock;
-        if (context !== window) {
-        	context.scrollTop = position(start, end, elapsed, duration);
+
+        if(axis == "x") {
+            if (context !== window) {
+                context.scrollLeft = position(start, end, elapsed, duration);
+            }
+            else {
+                window.scroll(position(start, end, elapsed, duration), 0);
+            }
         }
         else {
-        	window.scroll(0, position(start, end, elapsed, duration));
+            if (context !== window) {
+                context.scrollTop = position(start, end, elapsed, duration);
+            }
+            else {
+                window.scroll(0, position(start, end, elapsed, duration));
+            }
         }
+
 
         if (elapsed > duration) {
             if (typeof callback === 'function') {
